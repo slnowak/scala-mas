@@ -45,13 +45,14 @@ trait ConcurrentRunner {
     implicit val system = agentRuntime.system
     implicit val context = system.dispatcher
 
-    val log = Logging(system, classOf[ConcurrentRunner])
-    Logger(frequency = 1 second) {
-      time =>
-        log info (s"$time ${formatter(stats.getNow)}")
-    }
+//    val log = Logging(system, classOf[ConcurrentRunner])
+//    Logger(frequency = 1 second) {
+//      time =>
+//        log info (s"$time ${formatter(stats.getNow)}")
+//    }
 
     val root = system.actorOf(RootEnvironment.props(environmentProps, islands, random))
+    println(root)
     for (
       _ <- Reaper.terminateAfter(root, duration);
       _ <- stats.get) {

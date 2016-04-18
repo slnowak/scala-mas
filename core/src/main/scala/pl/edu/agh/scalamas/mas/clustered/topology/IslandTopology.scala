@@ -19,37 +19,21 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package pl.edu.agh.scalamas.mas.sync
+package pl.edu.agh.scalamas.mas.clustered.topology
 
-import akka.actor._
-import pl.edu.agh.scalamas.mas.Logic
-import pl.edu.agh.scalamas.mas.RootEnvironment.{Add, migration}
-import pl.edu.agh.scalamas.mas.sync.SyncEnvironment.Loop
-
-object SyncEnvironment {
-
-  case object Loop
-
-  def props(logic: Logic) = Props(classOf[SyncEnvironment], logic)
-}
+import akka.actor.Address
 
 /**
- * A synchronous island implementation. This actor spins in a messages loop. In each iteration it updates synchronously
- * the population accordingly to the behaviour and meetings functions. This islands supports migration, assuming its
- * parent is a RootEnvironment.
- *
- * @param logic the callbacks for the simulation
- */
-class SyncEnvironment(logic: Logic) extends Actor {
+  * Created by novy on 06.04.16.
+  */
+trait IslandTopology {
 
-  var population = logic.initialPopulation
-  self ! Loop
+  def neighboursOf(island: Island): List[Island]
 
-  override def receive = {
-    case Loop =>
-      println(population)
-      population = population.groupBy(logic.behaviourFunction).flatMap(migration orElse logic.meetingsFunction).toList
-      self ! Loop
-    case Add(agent) => population :+= agent
-  }
+  def withNew(island: Island): IslandTopology
+
+  def withoutExisting(island: Island): IslandTopology
+
 }
+
+case class Island(islandAddress: Address)

@@ -2,12 +2,16 @@ import sbt._
 
 object Dependencies {
 
-  val akkaVersion = "2.3.8"
+  val akkaVersion = "2.4.3"
   val akka = Seq(
     "akka-actor",
     "akka-slf4j",
     "akka-agent",
-    "akka-testkit"
+    "akka-testkit",
+    "akka-remote",
+    "akka-cluster",
+    "akka-cluster-metrics",
+    "akka-cluster-tools"
   ).map("com.typesafe.akka" %% _ % akkaVersion)
 
   val config = Seq(

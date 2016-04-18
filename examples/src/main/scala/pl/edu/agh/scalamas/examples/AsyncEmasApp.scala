@@ -19,37 +19,24 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package pl.edu.agh.scalamas.mas.sync
+package pl.edu.agh.scalamas.examples
 
-import akka.actor._
-import pl.edu.agh.scalamas.mas.Logic
-import pl.edu.agh.scalamas.mas.RootEnvironment.{Add, migration}
-import pl.edu.agh.scalamas.mas.sync.SyncEnvironment.Loop
+import pl.edu.agh.scalamas.app.ConcurrentStack
+import pl.edu.agh.scalamas.emas.EmasLogic
+import pl.edu.agh.scalamas.genetic.RastriginProblem
+import pl.edu.agh.scalamas.mas.clustered.ClusteredEnvironment
 
-object SyncEnvironment {
-
-  case object Loop
-
-  def props(logic: Logic) = Props(classOf[SyncEnvironment], logic)
-}
+import scala.concurrent.duration._
 
 /**
- * A synchronous island implementation. This actor spins in a messages loop. In each iteration it updates synchronously
- * the population accordingly to the behaviour and meetings functions. This islands supports migration, assuming its
- * parent is a RootEnvironment.
- *
- * @param logic the callbacks for the simulation
- */
-class SyncEnvironment(logic: Logic) extends Actor {
+  * Created by novy on 06.04.16.
+  */
+object AsyncEmasApp extends ConcurrentStack("emas")
+  with ClusteredEnvironment with EmasLogic with RastriginProblem {
 
-  var population = logic.initialPopulation
-  self ! Loop
 
-  override def receive = {
-    case Loop =>
-      println(population)
-      population = population.groupBy(logic.behaviourFunction).flatMap(migration orElse logic.meetingsFunction).toList
-      self ! Loop
-    case Add(agent) => population :+= agent
+  def main(args: Array[String]) {
+    run(15 seconds)
   }
+
 }
