@@ -24,16 +24,19 @@ package pl.edu.agh.scalamas.mas.clustered
 import akka.actor._
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent._
+import pl.edu.agh.scalamas.mas.Logic
 import pl.edu.agh.scalamas.mas.clustered.IslandTopologyCoordinator.NeighboursChanged
+import pl.edu.agh.scalamas.mas.clustered.island.IslandActor
 import pl.edu.agh.scalamas.mas.clustered.topology.{Island, IslandTopology, RingTopology}
 
 /**
   * Created by novy on 09.04.16.
   */
-class IslandTopologyCoordinator(var topology: IslandTopology, islandActor: ActorRef) extends Actor with ActorLogging {
+class IslandTopologyCoordinator(logic: Logic, var topology: IslandTopology) extends Actor with ActorLogging {
 
   val cluster = Cluster(context.system)
   val thisIsland = Island(cluster.selfAddress)
+  val islandActor = createIsland()
 
   override def preStart(): Unit = subscribeToClusterChanges()
 
@@ -57,6 +60,8 @@ class IslandTopologyCoordinator(var topology: IslandTopology, islandActor: Actor
       notifyIslandActorAboutNeighbourhoodChange()
   }
 
+  private def createIsland(): ActorRef = context.actorOf(IslandActor.props(logic), "island")
+
   private def addIslandToTopology(islandAddress: Address): Unit = {
     topology = topology.withNew(Island(islandAddress))
   }
@@ -70,7 +75,7 @@ class IslandTopologyCoordinator(var topology: IslandTopology, islandActor: Actor
   }
 
   private def toActorSelection(island: Island): ActorSelection = {
-    context.actorSelection(s"akka.tcp://${island.islandAddress.hostPort}/user/island")
+    context.actorSelection(s"akka.tcp://${island.islandAddress.hostPort}/user/coordinator/island")
   }
 
   private def subscribeToClusterChanges(): Unit = {
@@ -82,8 +87,8 @@ class IslandTopologyCoordinator(var topology: IslandTopology, islandActor: Actor
 }
 
 object IslandTopologyCoordinator {
-  def props(islandActor: ActorRef, initialTopology: IslandTopology = RingTopology()): Props =
-    Props(new IslandTopologyCoordinator(initialTopology, islandActor))
+  def props(logic: Logic, initialTopology: IslandTopology = RingTopology()): Props =
+    Props(new IslandTopologyCoordinator(logic, initialTopology))
 
   case class NeighboursChanged(neighbours: List[ActorSelection])
 

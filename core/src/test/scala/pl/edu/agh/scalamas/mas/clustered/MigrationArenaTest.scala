@@ -27,6 +27,7 @@ import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, WordSpecLike}
 import pl.edu.agh.scalamas.mas.LogicTypes.Agent
 import pl.edu.agh.scalamas.mas.RootEnvironment.Add
 import pl.edu.agh.scalamas.mas.async.Arena.Join
+import pl.edu.agh.scalamas.mas.clustered.island.MigrationArena
 
 /**
   * Created by novy on 10.04.16.

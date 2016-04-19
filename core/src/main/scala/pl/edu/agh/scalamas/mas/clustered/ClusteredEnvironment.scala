@@ -21,61 +21,20 @@
  */
 package pl.edu.agh.scalamas.mas.clustered
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Props}
-import pl.edu.agh.scalamas.app.EnvironmentStrategy
-import pl.edu.agh.scalamas.mas.LogicTypes._
-import pl.edu.agh.scalamas.mas.RootEnvironment._
-import pl.edu.agh.scalamas.mas.async.{Arena, Individual}
-import pl.edu.agh.scalamas.mas.clustered.IslandTopologyCoordinator.NeighboursChanged
-import pl.edu.agh.scalamas.mas.{Logic, LogicStrategy}
+import akka.actor.Props
+import pl.edu.agh.scalamas.app.AsynchronousEnvironment
+import pl.edu.agh.scalamas.mas.LogicStrategy
 
 /**
   * Created by novy on 18.04.16.
   */
-trait ClusteredEnvironment extends EnvironmentStrategy {
+trait ClusteredEnvironment extends AsynchronousEnvironment {
   this: LogicStrategy =>
-  override def environmentProps: Props = IslandActor.props(logic)
+
+  override def environmentProps: Props = IslandTopologyCoordinator.props(logic)
 }
 
-object IslandActor {
-
-  def props(logic: Logic) = Props(new IslandActor(logic))
-}
-
-class IslandActor(logic: Logic) extends Actor with ActorLogging {
-  val arenas = arenasForBehaviours(logic.behaviours, migration orElse logic.meetingsFunction)
-  val switchingBehaviour = (agent: Agent) => arenas(logic.behaviourFunction(agent))
-
-  logic.initialPopulation foreach addAgent
-
-  def receive = {
-    case msg: NeighboursChanged =>
-      migrationArena forward msg
-
-    case Add(agentState) => addAgent(agentState)
-  }
-
-  def addAgent(agent: Agent) = context.actorOf(Individual.props(agent, switchingBehaviour))
-
-  def arenasForBehaviours(behaviours: Seq[Behaviour], meetings: MeetingFunction): Map[Behaviour, ActorRef] =
-    behaviours map {
-      case m: Migration => migrationBehaviour(m)
-      case b: Behaviour => behaviourWithinSingleIsland(b, meetings)
-    } toMap
 
 
-  private def behaviourWithinSingleIsland(behaviour: Behaviour, meetings: MeetingFunction): (Behaviour, ActorRef) = {
-    val meeting = (agents: List[Agent]) => meetings((behaviour, agents))
-    behaviour -> interIslandArenaFor(behaviour, meeting)
-  }
 
-  def interIslandArenaFor(behaviour: Behaviour, meeting: (List[Agent]) => Population): ActorRef = {
-    context.actorOf(Arena.props(behaviour.capacity, meeting), behaviour.getClass.getSimpleName)
-  }
 
-  def migrationBehaviour(migrationBehaviour: Migration): (Behaviour, ActorRef) = {
-    migrationBehaviour -> migrationArena
-  }
-
-  val migrationArena: ActorRef = context.actorOf(MigrationArena.props(List.empty, 2))
-}

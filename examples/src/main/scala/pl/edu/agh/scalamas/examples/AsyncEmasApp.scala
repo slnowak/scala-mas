@@ -21,7 +21,7 @@
  */
 package pl.edu.agh.scalamas.examples
 
-import pl.edu.agh.scalamas.app.ConcurrentStack
+import pl.edu.agh.scalamas.app.ClusteredStack
 import pl.edu.agh.scalamas.emas.EmasLogic
 import pl.edu.agh.scalamas.genetic.RastriginProblem
 import pl.edu.agh.scalamas.mas.clustered.ClusteredEnvironment
@@ -31,12 +31,24 @@ import scala.concurrent.duration._
 /**
   * Created by novy on 06.04.16.
   */
-object AsyncEmasApp extends ConcurrentStack("emas")
-  with ClusteredEnvironment with EmasLogic with RastriginProblem {
-
+object AsyncEmasApp {
 
   def main(args: Array[String]) {
-    run(15 seconds)
+    if (args.isEmpty)
+      startup(Seq("2551", "2552"))
+    else
+      startup(args)
   }
 
+  private def startup(ports: Seq[String]): Unit = ports foreach runRastriginInstance
+
+  private def runRastriginInstance(stringPort: String): Unit = {
+    RastriginClusteredProblemRunningOnPort(stringPort).run(15 seconds)
+  }
+
+  private implicit def stringToInt(s: String): Int = Integer.parseInt(s)
+}
+
+case class RastriginClusteredProblemRunningOnPort(val port: Int) extends ClusteredStack(port)
+  with ClusteredEnvironment with EmasLogic with RastriginProblem {
 }

@@ -19,14 +19,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package pl.edu.agh.scalamas.mas.clustered
+package pl.edu.agh.scalamas.mas.clustered.island
 
 import akka.actor._
 import pl.edu.agh.scalamas.mas.LogicTypes.Agent
 import pl.edu.agh.scalamas.mas.RootEnvironment.Add
 import pl.edu.agh.scalamas.mas.async.Arena.Join
 import pl.edu.agh.scalamas.mas.clustered.IslandTopologyCoordinator.NeighboursChanged
-import pl.edu.agh.scalamas.mas.clustered.MigrationArena.{AgentActor, CreateNewAgents}
+import pl.edu.agh.scalamas.mas.clustered.island.MigrationArena.AgentActor
 
 import scala.util.Random
 
@@ -70,12 +70,8 @@ class MigrationArena(var neighbours: List[ActorSelection], requiredAgentsToMigra
 
 object MigrationArena {
 
-  def props(neighbours: List[ActorSelection], requiredAgentsToMigrate: Int = 3): Props =
+  def props(neighbours: List[ActorSelection] = List.empty, requiredAgentsToMigrate: Int = 3): Props =
     Props(new MigrationArena(neighbours, requiredAgentsToMigrate))
-
-  trait AgentState
-
-  case class CreateNewAgents(agentStates: List[AgentState])
 
   case class AgentActor(agentState: Agent, agentActor: ActorRef)
 
